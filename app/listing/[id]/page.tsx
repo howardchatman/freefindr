@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getListingById } from '@/lib/db/queries'
 import { ListingGallery } from '@/components/listing/ListingGallery'
-import { LeadForm } from '@/components/listing/LeadForm'
+import { LeadCTA } from '@/components/listing/LeadCTA'
+import { BackHeader } from '@/components/shared/AppHeader'
 import { timeAgo, formatDate } from '@/lib/utils/dates'
 import { categoryEmoji, categoryLabel } from '@/lib/utils/category'
 
@@ -32,79 +33,87 @@ export default async function ListingPage({ params }: PageProps) {
     ? [listing.image_url]
     : []
 
-  const location = [listing.city, listing.state, listing.zip].filter(Boolean).join(', ')
+  const location = [listing.city, listing.state].filter(Boolean).join(', ')
+  const fullLocation = [listing.city, listing.state, listing.zip].filter(Boolean).join(', ')
+
+  // Posted within 6 hours = urgency
+  const isUrgent = listing.posted_at
+    ? (Date.now() - new Date(listing.posted_at).getTime()) / 3_600_000 < 6
+    : false
 
   return (
-    <div className="min-h-screen pb-24">
-      {/* Back nav */}
-      <div className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Link
-            href="/feed"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50"
-            aria-label="Back to feed"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-gray-900">{listing.title}</p>
-          </div>
-          <span className="shrink-0 rounded-full bg-brand-500 px-2.5 py-0.5 text-xs font-bold text-white">
-            FREE
-          </span>
-        </div>
-      </div>
+    <div className="min-h-screen bg-surface pb-28">
+      <BackHeader title={listing.title} />
 
-      <div className="px-4 py-4">
-        {/* Image gallery */}
+      <div className="px-4 pt-4">
+        {/* Gallery */}
         <ListingGallery images={images} title={listing.title} />
 
-        {/* Title & meta */}
-        <div className="mt-5">
-          <h1 className="text-xl font-bold leading-snug text-gray-900">{listing.title}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-              {categoryEmoji(listing.category)} {categoryLabel(listing.category)}
+        {/* Urgency strip — only for very recent items */}
+        {isUrgent && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-100 px-3 py-2.5">
+            <span className="text-base">⚡</span>
+            <p className="text-xs font-semibold text-amber-800">
+              Just posted — items like this go fast. Don't wait.
+            </p>
+          </div>
+        )}
+
+        {/* Title block */}
+        <div className="mt-4">
+          {/* FREE pill */}
+          <div className="mb-2 flex items-center gap-2">
+            <span className="rounded-full bg-brand-500 px-3 py-1 text-xs font-bold text-white tracking-wide">
+              FREE
             </span>
             {listing.source && (
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-[#6B7280]">
                 {listing.source.name}
               </span>
             )}
           </div>
-        </div>
 
-        {/* Location + time */}
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
-          {location && (
-            <div className="flex items-center gap-1">
-              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          <h1 className="text-xl font-black leading-tight text-[#111111] text-balance">
+            {listing.title}
+          </h1>
+
+          {/* Meta row */}
+          <div className="mt-3 flex flex-wrap gap-3 text-sm text-[#6B7280]">
+            {fullLocation && (
+              <div className="flex items-center gap-1.5">
+                <svg className="h-4 w-4 text-[#9CA3AF] shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                </svg>
+                <span>{fullLocation}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <svg className="h-4 w-4 text-[#9CA3AF] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>{location}</span>
+              <span>Posted {timeAgo(listing.posted_at)}</span>
             </div>
-          )}
-          <div className="flex items-center gap-1">
-            <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Posted {timeAgo(listing.posted_at)}</span>
+          </div>
+
+          {/* Category tag */}
+          <div className="mt-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-semibold text-[#6B7280]">
+              <span>{categoryEmoji(listing.category)}</span>
+              <span>{categoryLabel(listing.category)}</span>
+            </span>
           </div>
         </div>
 
         {/* Divider */}
-        <div className="my-5 border-t border-gray-100" />
+        <div className="my-5 h-px bg-[#E5E7EB]" />
 
         {/* Description */}
         {listing.description && (
           <div className="mb-5">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">
+            <h2 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-[#9CA3AF]">
               Description
             </h2>
-            <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+            <p className="whitespace-pre-line text-[15px] leading-relaxed text-[#374151]">
               {listing.description}
             </p>
           </div>
@@ -117,7 +126,7 @@ export default async function ListingPage({ params }: PageProps) {
               href={listing.source_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-brand-600 underline hover:text-brand-700"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
             >
               View original listing
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -127,12 +136,25 @@ export default async function ListingPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* MAIN CTA — Lead capture */}
-        <LeadForm listingId={listing.id} listingTitle={listing.title} />
+        {/* ── PRIMARY CTA ──────────────────────────────── */}
+        <LeadCTA listingId={listing.id} listingTitle={listing.title} />
 
-        {/* Posted details */}
-        <p className="mt-4 text-center text-xs text-gray-400">
-          Listed {formatDate(listing.posted_at)} · Scraped {timeAgo(listing.scraped_at)}
+        {/* Alert me link */}
+        <div className="mt-4 text-center">
+          <Link
+            href="/alerts"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#6B7280] hover:text-brand-600"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            Alert me when similar items appear
+          </Link>
+        </div>
+
+        {/* Tiny footer */}
+        <p className="mt-6 text-center text-[11px] text-[#9CA3AF]">
+          Listed {formatDate(listing.posted_at)}
         </p>
       </div>
     </div>

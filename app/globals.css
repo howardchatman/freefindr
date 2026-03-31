@@ -9,11 +9,12 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-surface text-[#111111] antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
+}
 
-  /* Smooth scrolling for filter chips */
+@layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -21,14 +22,22 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-}
 
-@layer utilities {
-  /* Safe area insets for iOS */
+  /* iOS safe area */
   .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
   }
   .safe-area-pt {
     padding-top: env(safe-area-inset-top, 0px);
   }
+
+  /* Text balance for headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+  .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 }
